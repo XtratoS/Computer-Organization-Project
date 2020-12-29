@@ -104,7 +104,7 @@ module PCI(
                 DEVSEL_2 <= 0;
                 TRDY_2 <= 0;
             end
-            if (NEG_CLOCK_COUNTER >= 1 && ~IRDY && ~TRDY_wire) begin
+            if (~IRDY) begin
             // if (NEG_CLOCK_COUNTER >= 1) begin
                 DATA_REG <= MEMORY[INDEX];
                 INDEX <= INDEX + 1;
