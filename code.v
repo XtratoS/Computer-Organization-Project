@@ -98,14 +98,13 @@ module PCI(
         // READ
         if (READ_OP) begin
             
-            if ((TRANSACTION || LAST_DATA_TRANSFER)) begin
+            if (TRANSACTION || LAST_DATA_TRANSFER) begin
                 // Increment the clock counter every negative edge
                 NEG_CLOCK_COUNTER <= NEG_CLOCK_COUNTER + 1;
                 DEVSEL_2 <= 0;
                 TRDY_2 <= 0;
             end
             if (~IRDY) begin
-            // if (NEG_CLOCK_COUNTER >= 1) begin
                 DATA_REG <= MEMORY[INDEX];
                 INDEX <= INDEX + 1;
             end
@@ -154,11 +153,11 @@ module PCIWRITEREADTest;
     // CONSTANTS
     parameter PCI_read = 4'b0010;
     parameter PCI_write = 4'b0011;
-    reg [31:0] DEVICE_ADDRESS = 32'h0000010;
+    parameter [31:0] DEVICE_ADDRESS = 32'h0000010;
     
     Clock C(clk);
 
-    // Instantiation the PCI Variables
+    // Instantiating the PCI Variables
     reg Frame = 1;
     reg IRDY = 1;
     reg [3:0] CBE = 4'hz;
@@ -218,7 +217,7 @@ module PCIWRITEREADTest;
     end
     
     always @(posedge clk, negedge clk) begin
-        // Stop the program after 100 nanoseconds
+        // Stop the program after 500 nanoseconds
         if ($time >= 500) begin
             $finish;
         end
