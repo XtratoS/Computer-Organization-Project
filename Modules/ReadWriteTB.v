@@ -34,6 +34,8 @@ module PCIWRITEREADTest;
     // PCI Instance
     PCI pci(CLK, FRAME, IRDY, CBE, AD, DEVSEL, TRDY, DEBUG, M1, M2, M3, M4);
     initial begin
+        $dumpfile("wavedump.vcd");
+        $dumpvars(CLK, FRAME, AD, CBE, IRDY, DEVSEL, TRDY);
         $monitor("FRAME: ", FRAME, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, " DEBUG: ", DEBUG[16:0], " MEMORY: ", M1[15:0], M2[15:0], M3[15:0], M4[15:0], " ", " CBE: ", CBE, " ADDRESS: ", AD[16:0], " Time: ", $time, " ", CLK);
         // WRITE OPERATION
         #100 FRAME <= 0;
