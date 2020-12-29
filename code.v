@@ -35,7 +35,11 @@ module PCI(
     
     // Memory belongs to the target
     reg [31:0] MEMORY [0:3];
+    
+    // Temporary Data Register to hold 4 bytes of data
     reg [31:0] DATA_REG = 32'h0;
+
+    // DEBUGGING
     reg [31:0] TEMP = 4'bz;
     assign DEBUG = TEMP;
     assign M1 = MEMORY[0];
