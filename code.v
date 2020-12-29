@@ -9,8 +9,8 @@ endmodule
 
 // The Main Module
 module PCI(
-    input clk,
-    input Frame,
+    input CLK,
+    input FRAME,
     input IRDY,
     input [3:0] CBE,
     inout [31:0] AD,
@@ -25,19 +25,19 @@ module PCI(
     // Constants
     parameter PCI_read = 4'b0010;
     parameter PCI_write = 4'b0011;
-    parameter device_address = 32'h0000010;
+    parameter DEVICE_ADDRESS = 32'h0000010;
     // wire Change_op = 0;
   
     // Read and write operation flags using the provided command
-    reg [3:0] CONTROL_REG = 4'bz;
-    wire READ_OP = (PCI_read == CONTROL_REG);
-    wire WRITE_OP = (PCI_write == CONTROL_REG);
+    reg [3:0] CONTROL_reg = 4'bz;
+    wire READ_OP = (PCI_read == CONTROL_reg);
+    wire WRITE_OP = (PCI_write == CONTROL_reg);
     
     // Memory belongs to the target
     reg [31:0] MEMORY [0:3];
     
     // Temporary Data Register to hold 4 bytes of data
-    reg [31:0] DATA_REG = 32'h0;
+    reg [31:0] DATA_reg = 32'h0;
 
     // DEBUGGING
     reg [31:0] TEMP = 4'bz;
@@ -48,33 +48,33 @@ module PCI(
     assign M4 = MEMORY[3];
     
     // Signals for READ Operations
-    wire TARGETED = (device_address == AD);
-    reg TARGETED_REG = 0;
-    wire TRANSACTION = ~Frame;
-    wire LAST_DATA_TRANSFER = Frame && ~IRDY;
+    wire TARGETED = (DEVICE_ADDRESS == AD);
+    reg TARGETED_reg = 0;
+    wire TRANSACTION = ~FRAME;
+    wire LAST_DATA_TRANSFER = FRAME && ~IRDY;
     
     // RST Signal to reset flags after every transaction
-    wire RST = Frame && IRDY;
+    wire RST = FRAME && IRDY;
     
     // DEVSEL and TRDY signals
-    reg DEVSEL = 1'b1;
-    reg DEVSEL_2 = 1'b1;
+    reg DEVSEL = 1;
+    reg DEVSEL_2 = 1;
     assign DEVSEL_wire = RST || DEVSEL;
-    reg TRDY = 1'b1;
-    reg TRDY_2 = 1'b1;
+    reg TRDY = 1;
+    reg TRDY_2 = 1;
     assign TRDY_wire = RST || TRDY;
     
     // Counters
-    reg [3:0] NEG_CLOCK_COUNTER = 0;
+    reg [7:0] NEG_CLOCK_COUNTER = 0;
     reg [1:0] INDEX = 0;
     
     // ADDRESS LINE Multiplexing (To Recieve Address then Send or Recieve Data)
     wire ADDRESS_TURNAROUND = ~IRDY && DEVSEL;
     wire CONTROL_ADDRESS_LINE_DURING_READ = (READ_OP && ~IRDY && ~ADDRESS_TURNAROUND);
     wire WAITING_IRDY = TRANSACTION && IRDY && ~DEVSEL;
-    assign AD = ((CONTROL_ADDRESS_LINE_DURING_READ || WAITING_IRDY) ? DATA_REG : 32'hz);
+    assign AD = ((CONTROL_ADDRESS_LINE_DURING_READ || WAITING_IRDY) ? DATA_reg : 32'hz);
     
-    always @(negedge clk) begin
+    always @(negedge CLK) begin
         // Handle the delay for DEVSEL and TRDY
         DEVSEL <= DEVSEL_2;
         TRDY <= TRDY_2;
@@ -82,8 +82,8 @@ module PCI(
         // RESET NEG_EDGE_COUNTER INDEX
         if (RST) begin
             NEG_CLOCK_COUNTER <= 0;
-            CONTROL_REG <= 4'bz;
-            TARGETED_REG <= 0;
+            CONTROL_reg <= 4'bz;
+            TARGETED_reg <= 0;
             TRDY <= 1;
             TRDY_2 <= 1;
             DEVSEL <= 1;
@@ -97,7 +97,6 @@ module PCI(
         
         // READ
         if (READ_OP) begin
-            
             if (TRANSACTION || LAST_DATA_TRANSFER) begin
                 // Increment the clock counter every negative edge
                 NEG_CLOCK_COUNTER <= NEG_CLOCK_COUNTER + 1;
@@ -105,7 +104,7 @@ module PCI(
                 TRDY_2 <= 0;
             end
             if (~IRDY) begin
-                DATA_REG <= MEMORY[INDEX];
+                DATA_reg <= MEMORY[INDEX];
                 INDEX <= INDEX + 1;
             end
         end
@@ -118,24 +117,24 @@ module PCI(
             if (TRANSACTION || LAST_DATA_TRANSFER) begin
                 NEG_CLOCK_COUNTER <= NEG_CLOCK_COUNTER + 1;
             end
-            if (TARGETED_REG) begin
+            if (TARGETED_reg) begin
                 DEVSEL_2 <= 0;
                 TRDY_2 <= 0;
             end
         end
     end
     
-    always @(posedge clk) begin
+    always @(posedge CLK) begin
          
         // Store the control signal in the first positive edge
         if (NEG_CLOCK_COUNTER == 0) begin
             // Remember if the device was targeted by the operation
-            TARGETED_REG <= TARGETED;
-            CONTROL_REG <= CBE;
+            TARGETED_reg <= TARGETED;
+            CONTROL_reg <= CBE;
         end
         
         // WRITE OPERATION
-        if (TARGETED_REG && WRITE_OP && ~TRDY) begin
+        if (TARGETED_reg && WRITE_OP && ~TRDY) begin
             if (CBE == 4'b1111) begin
                 MEMORY[INDEX] <= AD;
                 TEMP <= AD;
@@ -155,10 +154,10 @@ module PCIWRITEREADTest;
     parameter PCI_write = 4'b0011;
     parameter [31:0] DEVICE_ADDRESS = 32'h0000010;
     
-    Clock C(clk);
+    Clock C(CLK);
 
     // Instantiating the PCI Variables
-    reg Frame = 1;
+    reg FRAME = 1;
     reg IRDY = 1;
     reg [3:0] CBE = 4'hz;
     reg [31:0] DATA = 32'hz;
@@ -168,7 +167,7 @@ module PCIWRITEREADTest;
     reg TRANSACTION = 0;
 
     // ADDRESS LINE Multiplexing
-    wire SENDING_ADDRESS = ((~Frame) && IRDY && DEVSEL);
+    wire SENDING_ADDRESS = ((~FRAME) && IRDY && DEVSEL);
     reg [3:0] OP = 4'hz;
     wire WRITE_OP = (OP == PCI_write);
     wire SENDING_DATA = (~IRDY && WRITE_OP);
@@ -182,12 +181,11 @@ module PCIWRITEREADTest;
     wire [31:0] M4;
 
     // PCI Instance
-    PCI pci(clk, Frame, IRDY, CBE, AD, DEVSEL, TRDY, DEBUG, M1, M2, M3, M4);
+    PCI pci(CLK, FRAME, IRDY, CBE, AD, DEVSEL, TRDY, DEBUG, M1, M2, M3, M4);
     initial begin
-        // Monitor the frame and clock
-        $monitor("Frame: ", Frame, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, " DEBUG: ", DEBUG[16:0], " MEMORY: ", M1[15:0], M2[15:0], M3[15:0], M4[15:0], " ", " CBE: ", CBE, " ADDRESS: ", AD[16:0], " Time: ", $time, " ", clk);
+        $monitor("FRAME: ", FRAME, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, " DEBUG: ", DEBUG[16:0], " MEMORY: ", M1[15:0], M2[15:0], M3[15:0], M4[15:0], " ", " CBE: ", CBE, " ADDRESS: ", AD[16:0], " Time: ", $time, " ", CLK);
         // WRITE OPERATION
-        #100 Frame <= 0;
+        #100 FRAME <= 0;
         OP <= 4'b0011;
         CBE <= 4'b0011;
         TRANSACTION <= 1;
@@ -200,23 +198,24 @@ module PCIWRITEREADTest;
         CBE <= 4'b0000;
         #10 DATA <= 32'd1004;
         CBE <= 4'b1111;
-        Frame <= 1;
+        FRAME <= 1;
         #10 IRDY <= 1;
         CBE <= 4'hz;
         TRANSACTION <= 0;
         
         // READ OPERATION
         OP <= 4'b0010;
-        #140 Frame <= 0;
+        #140 FRAME <= 0;
         CBE <= 4'b0010;
         #10 IRDY <= 0;
         #40 IRDY <= 1;
         #10 IRDY <= 0;
-        #100 Frame <= 1;
+        #100 FRAME <= 1;
         #10 IRDY <= 1;
+        CBE <= 4'hz;
     end
     
-    always @(posedge clk, negedge clk) begin
+    always @(posedge CLK, negedge CLK) begin
         // Stop the program after 500 nanoseconds
         if ($time >= 500) begin
             $finish;
