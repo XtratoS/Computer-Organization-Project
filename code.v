@@ -82,7 +82,7 @@ module PCI(
         // RESET NEG_EDGE_COUNTER INDEX
         if (RST) begin
             NEG_CLOCK_COUNTER <= 0;
-            CONTROL_REG <= 4'bx;
+            CONTROL_REG <= 4'bz;
             TARGETED_REG <= 0;
             TRDY <= 1;
             TRDY_2 <= 1;
