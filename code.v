@@ -53,6 +53,7 @@ module PCI(
     wire TRANSACTION = ~Frame;
     wire LAST_DATA_TRANSFER = Frame && ~IRDY;
     
+    // RST Signal to reset flags after every transaction
     wire RST = Frame && IRDY;
     
     // DEVSEL and TRDY signals
@@ -69,7 +70,9 @@ module PCI(
     
     // ADDRESS LINE Multiplexing (To Recieve Address then Send or Recieve Data)
     wire ADDRESS_TURNAROUND = ~IRDY && DEVSEL;
-    assign AD = (((READ_OP && ~IRDY && ~ADDRESS_TURNAROUND) || (IRDY && ~DEVSEL)) ? DATA_REG : 32'hz);
+    wire CONTROL_ADDRESS_LINE_DURING_READ = (READ_OP && ~IRDY && ~ADDRESS_TURNAROUND);
+    wire WAITING_IRDY = TRANSACTION && IRDY && ~DEVSEL;
+    assign AD = ((CONTROL_ADDRESS_LINE_DURING_READ || WAITING_IRDY) ? DATA_REG : 32'hz);
     
     always @(negedge clk) begin
         // Handle the delay for DEVSEL and TRDY
