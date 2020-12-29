@@ -51,7 +51,7 @@ module PCI(
     wire TARGETED = (device_address == AD);
     reg TARGETED_REG = 0;
     wire TRANSACTION = ~Frame;
-    wire LAST_DATA_READ = Frame && ~IRDY;
+    wire LAST_DATA_TRANSFER = Frame && ~IRDY;
     
     wire RST = Frame && IRDY;
     
@@ -95,7 +95,7 @@ module PCI(
         // READ
         if (READ_OP) begin
             
-            if ((TRANSACTION || LAST_DATA_READ)) begin
+            if ((TRANSACTION || LAST_DATA_TRANSFER)) begin
                 // Increment the clock counter every negative edge
                 NEG_CLOCK_COUNTER <= NEG_CLOCK_COUNTER + 1;
                 DEVSEL_2 <= 0;
@@ -109,11 +109,11 @@ module PCI(
         end
         // WRITE
         else if (WRITE_OP) begin
-            if (LAST_DATA_READ) begin
+            if (LAST_DATA_TRANSFER) begin
                 DEVSEL_2 <= 1;
                 TRDY_2 <= 1;
             end
-            if (TRANSACTION || LAST_DATA_READ) begin
+            if (TRANSACTION || LAST_DATA_TRANSFER) begin
                 NEG_CLOCK_COUNTER <= NEG_CLOCK_COUNTER + 1;
             end
             if (TARGETED_REG) begin
