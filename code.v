@@ -29,7 +29,6 @@ module PCI(
     // wire Change_op = 0;
   
     // Read and write operation flags using the provided command
-    //Control register = CBE
     reg [3:0] CONTROL_REG = 4'bz;
     wire READ_OP = (PCI_read == CONTROL_REG);
     wire WRITE_OP = (PCI_write == CONTROL_REG);
@@ -103,7 +102,6 @@ module PCI(
                 DATA_REG <= MEMORY[INDEX];
                 INDEX <= INDEX + 1;
             end
-            
         end
         // WRITE
         else if (WRITE_OP) begin
@@ -163,8 +161,6 @@ module PCIWRITEREADTest;
     reg [3:0] OP = 4'hz;
     wire WRITE_OP = (OP == PCI_write);
     wire SENDING_DATA = (~IRDY && WRITE_OP);
-    // wire RECIEVING_DATA = (~IRDY && ~TRDY && ~DEVSEL);
-    // wire DATA_ON = SENDING_DATA;
     reg TRANSACTION = 0;
     wire [31:0] AD = ( SENDING_ADDRESS ? DEVICE_ADDRESS : ( SENDING_DATA ? DATA : 32'bz ) );
     wire [31:0] DEBUG;
@@ -217,87 +213,3 @@ module PCIWRITEREADTest;
         end
     end
 endmodule
-
-// module PCIWRITETest;
-//     parameter PCI_read = 4'b0010;
-//     parameter PCI_write = 4'b0011;
-//     // Instantiating the clock
-//     Clock C(clk);
-//     // Instantiation the PCI Variables
-//     reg Frame = 1;
-//     reg IRDY = 1;
-//     reg [3:0] CBE = 4'b0011;
-//     reg [31:0] DATA;
-//     // ADDRESS LINE Multiplexing
-//     wire SENDING_DATA = ~IRDY;
-//     reg TRANSACTION = 0;
-//     wire [31:0] AD = SENDING_DATA ? DATA : (TRANSACTION ? 32'h0000010 : 32'h1);
-//     wire [31:0] DEBUG;
-//     // PCI Instance
-//     PCI pci(clk, Frame, IRDY, CBE, AD, DEVSEL, TRDY, DEBUG);
-//     initial begin
-//         // Monitor the frame and clock
-//         $monitor("Frame: ", Frame, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, " DEBUG: ", DEBUG[16:0], " CBE: ", CBE, " ADDRESS: ", AD[16:0], " Time: ", $time, " ", clk);
-//         // Set the frame to low after 15 nanosecond
-//         #100 Frame <= 0;
-//         TRANSACTION <= 1;
-//         #10 IRDY <= 0;
-//         DATA <= 32'd1001;
-//         CBE <= 4'b0000;
-//         #20 DATA <= 32'd1002;
-//         CBE <= 4'b1111;
-//         #10 DATA <= 32'd1003;
-//         CBE <= 4'b0000;
-//         #10 DATA <= 32'd1004;
-//         CBE <= 4'b1111;
-//         Frame <= 1;
-//         #10 IRDY <= 1;
-//         TRANSACTION <= 0;
-//     end
-//     // Always block at positive and negative edges of the clock
-//     always @(posedge clk, negedge clk) begin
-//         // $display("Frame: ", Frame, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, AD, $time);
-//     end
-//     always @(posedge clk, negedge clk) begin
-//         // Stop the program after 100 nanoseconds
-//         if ($time >= 200) begin
-//             $finish;
-//         end
-//     end
-// endmodule
-
-// module PCIREADTest;
-//     parameter PCI_read = 4'b0010;
-//     parameter PCI_write = 4'b0011;
-//     // Instantiating the clock
-//     Clock C(clk);
-//     // Instantiation the PCI Variables
-//     reg Frame = 1;
-//     reg IRDY = 1;
-//     reg [3:0] CBE = 4'b0010;
-//     // ADDRESS LINE Multiplexing
-//     wire [31:0] AD = ((CBE == PCI_read) && ~IRDY) ? 32'hz : 32'h0000010;
-//     // PCI Instance
-//     PCI pci(clk, Frame, IRDY, CBE, AD, DEVSEL, TRDY, DEBUG);
-//     initial begin
-//         // Monitor the frame and clock
-//         $monitor("Frame: ", Frame, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, AD, $time);
-//         // Set the frame to low after 15 nanosecond
-//         #100 Frame <= 0;
-//         #10 IRDY <= 0;
-//         #100 Frame <= 1;
-//         #10 IRDY <= 1;
-//         #100 Frame <= 0;
-//         #10 IRDY <= 0;
-//     end
-//     // Always block at positive and negative edges of the clock
-//     always @(posedge clk) begin
-//         $display("Frame: ", Frame, " DEVSEL: ", DEVSEL, " IRDY: ", IRDY, " TRDY: ", TRDY, AD, $time);
-//     end
-//     always @(posedge clk, negedge clk) begin
-//         // Stop the program after 100 nanoseconds
-//         if ($time == 200) begin
-//             $finish;
-//         end
-//     end
-// endmodule
